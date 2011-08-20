@@ -1,0 +1,39 @@
+
+
+The bugbuster.py script is a tiny Python script that wraps around
+two well known static analyzers, the splint static analyzer and the
+TenDRA compiler static checker. It has various options that will
+allow you to easily manage error message from the compile command
+under Emacs or VIM.
+
+
+It searches for the configuration file on the current directory
+as ./.bugbuster.ini and it has the following options:
+
+[global]
+includes = /usr/include/libxml2:/usr/include/python2.7 # include dirs
+suppress = true # suppress external files other than the processed file
+defaults = tendra:splint # default static checkers
+
+[tendra]
+flags = -Yxpg4:-Yposix2:-Yposix:-Xs # flags passed to TenDRA
+ignore = preprocessing:aborting # ignore errors containing...
+
+[splint]
+flags = -bugslimit:100 # flags passed to splint
+ignore = exported:observer # ignore errors containing...
+
+It also has the same options for the command line processing. Please
+execute:
+
+bugbuster.py --help
+
+To take a look on the available options.
+
+This script is licensed under New BSD License.
+
+
+
+
+
+
