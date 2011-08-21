@@ -1,4 +1,6 @@
 
+Description of bugbuster.py
+===========================
 
 The bugbuster.py script is a tiny Python script that wraps around
 two well known static analyzers, the splint static analyzer and the
@@ -11,17 +13,21 @@ It searches for the configuration file on the current directory
 as ./.bugbuster.ini and it has the following options:
 
 [global]
-includes = /usr/include/libxml2:/usr/include/python2.7 # include dirs
-suppress = true # suppress external files other than the processed file
-defaults = tendra:splint # default static checkers
+includes = /usr/include/libxml2:/usr ### include dirs
+suppress = true                      ### suppress other file messages
+defaults = cppcheck:tendra:splint    ### enabled checkers
 
 [tendra]
-flags = -Yxpg4:-Yposix2:-Yposix:-Xs # flags passed to TenDRA
-ignore = preprocessing:aborting # ignore errors containing...
+flags = -Yxpg4:-Yposix2:-Yposix:-Xs  ### tendra flags
+ignore = preprocessing:aborting      ### ignore lines with text
 
 [splint]
-flags = -bugslimit:100 # flags passed to splint
-ignore = exported:observer # ignore errors containing...
+flags = -bugslimit:100               ### splint flags
+ignore = exported:observer           ### ignore lines with text
+
+[cppcheck]
+noincludes = true                    ### omit default includes
+ignore = Checking:__cplusplus        ### ignore lines with text
 
 It also has the same options for the command line processing. Please
 execute:
@@ -32,8 +38,25 @@ To take a look on the available options.
 
 This script is licensed under New BSD License.
 
+Emacs Integration
+=================
 
+To integrate bugbuster.py in Emacs, you can add the following
+code in your .emacs file:
 
+(global-set-key [C-f11] 'dmw-do-bugbuster)
+
+(defun dmw-do-bugbuster ()
+  (interactive)
+  (set (make-local-variable 'compile-command)
+       (let ((file (file-name-nondirectory buffer-file-name)))
+         (format "bugbuster.py --file=%s" file)))
+  (message compile-command)
+  (compile compile-command))
+
+Remember that bugbuster.py and the compile command will use the
+current file directory as current directory and will search there
+for the .bugbuster.ini file for available options.
 
 
 
