@@ -47,7 +47,7 @@ class LintRunner(object):
     alias = False
 
     output_format = ("%(level)s %(error_type)s%(error_number)s:"
-                     "%(description)s at %(filename)s line %(line_number)s.")
+                     "%(description)s at %(filename)s line %(line_number)s.\n")
 
     output_template = dict.fromkeys(('level',
                                      'error_type',
@@ -100,6 +100,13 @@ class LintRunner(object):
             ignore = CONFIG.get(self.alias, 'ignore')
             ignore = map(lambda x: x.strip("\n\r "), ignore.split(":"))
             options.ignore = ignore
+        if CONFIG.has_option(self.alias, 'noincludes'):
+            ignore = CONFIG.getboolean(self.alias, 'noincludes')
+            nflags = []
+            if ignore:
+                nflags = filter(lambda x: not x.startswith("-I"),
+                                self.run_flags)
+            self.run_flags = nflags
 
     def fixup_data(self, line, data):
         """ Fixes data for missing elements """
@@ -172,11 +179,37 @@ class LintSplint(LintRunner):
     process_stderr = False
 
     def fixup_data(self, line, data):
-        if "*** Internal Bug" in line \
-           or "/usr/" in line:
+        if "*** Internal Bug" in line:
             return False
         data['level'] = 'WARNING'
         data['error_type'] = 'SPL'
+        data['error_number'] = 'E01'
+        return data
+
+
+class LintCppCheck(LintRunner):
+    """
+    Run splint static checker
+    """
+
+    alias = 'cppcheck'
+
+    run_flags = ['--enable=style',
+                 '--enable=unusedFunction',
+                 '--enable=information']
+
+    command = 'cppcheck'
+
+    output_matcher = re.compile(r'^\[(?P<filename>[^:]+):'
+                                r'(?P<line_number>[^:]+)\]: '
+                                r'\((?P<level>[^\)]+)\) '
+                                r'(?P<description>[^\r\n]+)$')
+
+    process_stderr = True
+
+    def fixup_data(self, line, data):
+        data['level'] = data['level'].upper()
+        data['error_type'] = 'CCH'
         data['error_number'] = 'E01'
         return data
 
@@ -234,10 +267,11 @@ options = False
 
 CONFIG = False
 
-LINT_DEFAULT = ['splint', 'tendra']
+LINT_DEFAULT = ['cppcheck', 'tendra', 'splint']
 
-LINT_MAP = {'splint': LintSplint,
-            'tendra': LintTendra}
+LINT_MAP = {'tendra': LintTendra,
+            'splint': LintSplint,
+            'cppcheck': LintCppCheck}
 
 
 def parse_options():
